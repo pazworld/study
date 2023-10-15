@@ -95,7 +95,7 @@ start_link() ->
     register(?MODULE, Pid=spawn_link(?MODULE, init, [])),
     Pid.
 
-terminame() ->
+terminate() ->
     ?MODULE ! shutdown.
 
 subscribe(Pid) ->
