@@ -5,11 +5,11 @@
                 to_go=0}).
 
 %%% Public interface
-start(EventName, Delay) ->
-    spawn(?MODULE, init, [self(), EventName, Delay]).
+start(EventName, DateTime) ->
+    spawn(?MODULE, init, [self(), EventName, DateTime]).
 
-start_link(EventName, Delay) ->
-    spawn_link(?MODULE, init, [self(), EventName, Delay]).
+start_link(EventName, DateTime) ->
+    spawn_link(?MODULE, init, [self(), EventName, DateTime]).
 
 cancel(Pid) ->
     %% Monitor in case the process is already dead
@@ -24,10 +24,14 @@ cancel(Pid) ->
     end.
 
 %%% Event's innards
-init(Server, EventName, DateTime) ->
+init(Server, EventName, DateTime={{_,_,_}, {_,_,_}}) ->
     loop(#state{server=Server,
                 name=EventName,
-                to_go=time_to_go(DateTime)}).
+                to_go=time_to_go(DateTime)});
+init(Server, EventName, Delay) ->
+    loop(#state{server=Server,
+                name=EventName,
+                to_go=normalize(Delay)}).
 
 %% Loop uses a list for times in order to go around the ~49 days limit
 %% on timeouts.
