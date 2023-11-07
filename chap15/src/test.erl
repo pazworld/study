@@ -9,6 +9,7 @@
                 name="",
                 to_go=0}).
 
+%% event set after 5 seconds
 test1() ->
     io:format("event set after 5 seconds, wait.~n"),
     spawn(event, loop, [#state{server=self(), name="test", to_go=[5]}]),
@@ -16,6 +17,7 @@ test1() ->
         X -> io:format("event received: ~p~n", [X])
     end.
 
+%% event set after 500 seconds, then canceled
 test2() ->
     io:format("event set after 500 seconds.~n"),
     Pid = event:start("Event", 500),
@@ -23,6 +25,7 @@ test2() ->
     io:format("event cancel.~n"),
     event:cancel(Pid).
 
+%% event set after now + 3 seconds
 test3() ->
     Now = erlang:localtime(),
     DateInSeconds = calendar:datetime_to_gregorian_seconds(Now),
