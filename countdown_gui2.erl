@@ -10,10 +10,19 @@ start() ->
     Frame = wxFrame:new(wx:null(), 1, "Countdown"),
 
     %% build and layout the GUI components
-    Counter = wxTextCtrl:new(Frame, ?wxID_ANY, [{value, "42"}, {size, {150, 50}}]),
+    Label = wxStaticText:new(Frame, ?wxID_ANY, "Seconds remaining"),
+    Counter = wxTextCtrl:new(Frame, ?wxID_ANY, [{value, "42"}]),
     Font = wxFont:new(42, ?wxFONTFAMILY_DEFAULT, ?wxFONTSTYLE_NORMAL, ?wxFONTWEIGHT_BOLD),
     wxTextCtrl:setFont(Counter, Font),
-    Button = wxButton:new(Frame, ?wxID_ANY, [{label, "Start"}, {pos, {0, 64}}, {size, {150, 50}}]),
+    Button = wxButton:new(Frame, ?wxID_ANY, [{label, "Start"}]),
+
+    MainSizer = wxBoxSizer:new(?wxVERTICAL),
+    wxSizer:add(MainSizer, Label),
+    wxSizer:add(MainSizer, Counter),
+    wxSizer:add(MainSizer, Button),
+    wxWindow:setSizer(Frame, MainSizer),
+    wxSizer:setSizeHints(MainSizer, Frame),
+
     wxButton:connect(Button, command_button_clicked, [{callback, fun handle_click/2}, {userData, #{counter => Counter, env => wx:get_env()}}]),
     wxFrame:show(Frame).
 
