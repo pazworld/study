@@ -10,16 +10,20 @@ start() ->
     Frame = wxFrame:new(wx:null(), 1, "Countdown"),
 
     %% build and layout the GUI components
-    Label = wxStaticText:new(Frame, ?wxID_ANY, "Seconds remaining"),
-    Counter = wxTextCtrl:new(Frame, ?wxID_ANY, [{value, "42"}]),
+    Label = wxStaticText:new(Frame, ?wxID_ANY, "Seconds remaining", [{style, ?wxALIGN_RIGHT}]),
+    wxStaticText:wrap(Label, 100),
+    Counter = wxTextCtrl:new(Frame, ?wxID_ANY, [{value, "42"}, {style, ?wxTE_RIGHT}]),
     Font = wxFont:new(42, ?wxFONTFAMILY_DEFAULT, ?wxFONTSTYLE_NORMAL, ?wxFONTWEIGHT_BOLD),
     wxTextCtrl:setFont(Counter, Font),
     Button = wxButton:new(Frame, ?wxID_ANY, [{label, "Start"}]),
 
+    CounterSizer = wxBoxSizer:new(?wxHORIZONTAL),
+    wxSizer:add(CounterSizer, Label, [{flag, ?wxALL bor ?wxALIGN_CENTRE}, {border, 5}]),
+    wxSizer:add(CounterSizer, Counter, [{proportion, 1}, {flag, ?wxEXPAND bor ?wxALL}, {border, 5}]),
+
     MainSizer = wxBoxSizer:new(?wxVERTICAL),
-    wxSizer:add(MainSizer, Label),
-    wxSizer:add(MainSizer, Counter),
-    wxSizer:add(MainSizer, Button),
+    wxSizer:add(MainSizer, CounterSizer, [{flag, ?wxEXPAND}]),
+    wxSizer:add(MainSizer, Button, [{flag, ?wxEXPAND bor ?wxALL}, {border, 5}]),
     wxWindow:setSizer(Frame, MainSizer),
     wxSizer:setSizeHints(MainSizer, Frame),
 
