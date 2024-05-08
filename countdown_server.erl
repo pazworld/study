@@ -48,6 +48,7 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
+%% Start button clicked
 handle_info(
         #wx{obj = Button, event = #wxCommand{type = command_button_clicked}},
         #state{counter = Counter, counting_down = false} = State) ->
@@ -61,6 +62,7 @@ handle_info(
             {noreply, State#state{tref = TRef, counting_down = true}}
     end;
 
+%% Stop button clicked
 handle_info(
         #wx{obj = Button, event = #wxCommand{type = command_button_clicked}},
         #state{counter = Counter, counting_down = true, tref = TRef} = State) ->
@@ -69,6 +71,7 @@ handle_info(
     wxButton:setLabel(Button, "Start"),
     {noreply, State#state{tref = undefined, counting_down = false}};
 
+%% called every 1 second to count down
 handle_info(
         update_gui,
         #state{button = Button, counter = Counter, counting_down = true} = State) ->
