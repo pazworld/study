@@ -15,6 +15,7 @@ start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 init([]) ->
+    print_pid("init"),
     wx:new(),
     Frame = wxFrame:new(wx:null(), 1, "Countdown"),
 
@@ -42,16 +43,19 @@ init([]) ->
     {ok, #state{counter = Counter, button = Button, counting_down = false}}.
 
 handle_call(_Request, _From, State) ->
+    print_pid("handle_call"),
     Reply = ok,
     {reply, Reply, State}.
 
 handle_cast(_Msg, State) ->
+    print_pid("handle_cast"),
     {noreply, State}.
 
 %% Start button clicked
 handle_info(
         #wx{obj = Button, event = #wxCommand{type = command_button_clicked}},
         #state{counter = Counter, counting_down = false} = State) ->
+    print_pid("handle_info: counting_down=false"),
     case list_to_integer(wxTextCtrl:getValue(Counter)) of
         0 ->
             {noreply, State};
@@ -66,6 +70,7 @@ handle_info(
 handle_info(
         #wx{obj = Button, event = #wxCommand{type = command_button_clicked}},
         #state{counter = Counter, counting_down = true, tref = TRef} = State) ->
+    print_pid("handle_info: counting_down=true"),
     erlang:cancel_timer(TRef),
     wxTextCtrl:setEditable(Counter, true),
     wxButton:setLabel(Button, "Start"),
@@ -75,6 +80,7 @@ handle_info(
 handle_info(
         update_gui,
         #state{button = Button, counter = Counter, counting_down = true} = State) ->
+    print_pid("handle_info: update_gui"),
     Value = wxTextCtrl:getValue(Counter),
     case list_to_integer(Value) of
         1 ->
@@ -89,8 +95,12 @@ handle_info(
     end.
 
 terminate(_Reason, _State) ->
+    print_pid("terminate"),
     wx:destroy(),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
+
+print_pid(Message) ->
+    io:format("~s: ~p~n", [Message, self()]).
