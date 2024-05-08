@@ -39,6 +39,8 @@ init([]) ->
     wxWindow:setMinSize(Frame, wxWindow:getSize(Frame)),
 
     wxButton:connect(Button, command_button_clicked),
+    wxFrame:connect(Frame, close_window),
+
     wxFrame:show(Frame),
     {ok, #state{counter = Counter, button = Button, counting_down = false}}.
 
@@ -92,7 +94,11 @@ handle_info(
             wxTextCtrl:setValue(Counter, integer_to_list(N-1)),
             TRef = erlang:send_after(1000, self(), update_gui),
             {noreply, State#state{tref = TRef}}
-    end.
+    end;
+
+%% window closed
+handle_info(#wx{event=#wxClose{}}, State) ->
+    {stop, normal, State}.
 
 terminate(_Reason, _State) ->
     print_pid("terminate"),
