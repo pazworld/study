@@ -1,3 +1,6 @@
+%% show message on paint event
+%% when enlarge window, move window from outside of screen, de-iconify
+
 -module(paint_event_capture).
 
 -behaviour(wx_object).
