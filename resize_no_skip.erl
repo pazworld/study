@@ -1,5 +1,5 @@
-%% resize event is not chained to children
-%% buttons in sizer are not resized when resize window
+%% resize event is chained to children
+%% buttons in sizer are resized when resize window
 
 -module(resize_no_skip).
 
@@ -16,7 +16,7 @@ start_link() ->
 
 init([]) ->
     wx:new(),
-    Frame = wxFrame:new(wx:null(), ?wxID_ANY, "resize, no skip"),
+    Frame = wxFrame:new(wx:null(), ?wxID_ANY, "resize, skip"),
     Sizer = wxBoxSizer:new(?wxVERTICAL),
     MkButton = 
 	fun(TheFrame, TheSizer, TheLabel) ->
@@ -26,7 +26,7 @@ init([]) ->
     [MkButton(Frame, Sizer, L) || L <- ["One", "Two", "Three"]],
     wxFrame:setSizer(Frame, Sizer),
     wxSizer:setSizeHints(Sizer, Frame),
-    wxFrame:connect(Frame, size),  %% subscribing to the size event
+    wxFrame:connect(Frame, size, [{skip, true}]),  %% subscribing to the size event and chain to children
     wxFrame:show(Frame),
     {Frame, #{frame => Frame}}.
 
