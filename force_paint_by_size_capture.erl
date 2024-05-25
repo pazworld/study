@@ -1,3 +1,5 @@
+%% show message on paint and size event
+
 -module(force_paint_by_size_capture).
 
 -behaviour(wx_object).
