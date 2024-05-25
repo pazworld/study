@@ -1,3 +1,6 @@
+%% resize event is not chained to children
+%% buttons in sizer are not resized when resize window
+
 -module(resize_no_skip).
 
 -behaviour(wx_object).
