@@ -31,4 +31,7 @@ start() ->
     Heart(MDC, wxBitmap:getWidth(Bitmap) - 5, 15),
     wxMemoryDC:destroy(MDC),
     wxDC:drawBitmap(CDC, Bitmap, {150,10}),
+
+    %% save bitmap into png file
+    wxBitmap:saveFile(Bitmap, "love_erlang.png", 15),
     ok.
