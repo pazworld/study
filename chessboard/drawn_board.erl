@@ -4,9 +4,7 @@
 
 -export([start_link/0]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-        handle_event/2,
-        handle_sync_event/3,
-        terminate/2, code_change/3]).
+        handle_event/2, handle_sync_event/3, terminate/2, code_change/3]).
 
 -include_lib("wx/include/wx.hrl").
 
@@ -15,22 +13,39 @@ start_link() ->
 
 init([]) ->
     wx:new(),
-    Frame = wxFrame:new(wx:null(), ?wxID_ANY, "chessboard"),
-			% [{style, ?wxDEFAULT_FRAME_STYLE bor ?wxFULL_REPAINT_ON_RESIZE}]),
+    Frame = wxFrame:new(wx:null(), ?wxID_ANY, "chessboard",
+			[{style, ?wxDEFAULT_FRAME_STYLE bor ?wxFULL_REPAINT_ON_RESIZE}]),
     Panel = wxPanel:new(Frame, [{size, {200, 200}}]),
     wxPanel:connect(Panel, paint, [callback]),
     wxFrame:connect(Frame, close_window),
     wxFrame:show(Frame),
-    wxFrame:refresh(Frame),
-    {Frame, #{panel => Panel}}.
-
-paint_board(#{panel := Panel}) ->
-    DC = wxPaintDC:new(Panel),
-    Black = {140, 220, 120},
+    White = {140, 220, 120},
+    WhiteBrush = wxBrush:new(White),
+    Black = {80, 160, 60},
     BlackBrush = wxBrush:new(Black),
+    wxFrame:refresh(Frame),
+    {Frame, #{panel => Panel, white_brush => WhiteBrush, black_brush => BlackBrush}}.
+
+paint_board(#{panel := Panel, white_brush := WhiteBrush, black_brush := BlackBrush}) ->
+    {W, H} = wxPanel:getSize(Panel),
+    SquareSize = square_size(W, H),
+
+    PaintSquare =
+        fun(DC, C, R) ->
+            % io:format("~p~n", [square_colour(C, R)]),
+            Brush = case square_colour(C, R) of
+                black -> BlackBrush;
+                white -> WhiteBrush
+            end,
+            Rectangle = rectangle({C, R}, SquareSize),
+            wxDC:setBrush(DC, Brush),
+            wxDC:drawRectangle(DC, Rectangle)
+        end,
+
+    DC = wxPaintDC:new(Panel),
     wxDC:setPen(DC, ?wxTRANSPARENT_PEN),
-    wxDC:setBrush(DC, BlackBrush),
-    wxDC:drawRectangle(DC, {10, 10, 100, 100}),
+    Seq0to7 = lists:seq(0, 7),
+    [PaintSquare(DC, C, R) || R <- Seq0to7, C <- Seq0to7],
     wxPaintDC:destroy(DC).
 
 % paint event
@@ -65,3 +80,15 @@ terminate(_Reason, _) ->
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
+
+square_size(W, H) ->
+    ((min(W, H) div 8) div 2) * 2.
+
+square_colour(Column, Row) ->
+    case (Column + Row) rem 2 of
+        0 -> white;
+        _ -> black
+    end.
+
+rectangle({Column, Row}, SquareSize) ->
+    {Column * SquareSize, Row * SquareSize, SquareSize, SquareSize}.
