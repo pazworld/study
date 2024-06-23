@@ -55,7 +55,8 @@ handle_info(Info, State) ->
     io:format("handle_info: Info: ~p~n", [Info]),
     {noreply, State}.
 
-terminate(_Reason, _) ->
+terminate(_Reason, State) ->
+    destroy_resources(State),
     wx:destroy().
 
 code_change(_OldVsn, State, _Extra) ->
@@ -91,6 +92,7 @@ load_images() ->
         ImageFileNames).
 
 paint_board(#{panel := Panel,
+        image_map := ImageMap,
         white_brush := WhiteBrush,
         black_brush := BlackBrush}) ->
     {W, H} = wxPanel:getSize(Panel),
@@ -113,3 +115,10 @@ paint_board(#{panel := Panel,
     Seq0to7 = lists:seq(0, 7),
     [PaintSquare(DC, C, R) || R <- Seq0to7, C <- Seq0to7],
     wxPaintDC:destroy(DC).
+
+destroy_resources(#{image_map := ImageMap,
+        white_brush := WhiteBrush,
+        black_brush := BlackBrush}) ->
+    [wxImage:destroy(I) || I <- maps:values(ImageMap)],
+    wxBrush:destroy(WhiteBrush),
+    wxBrush:destroy(BlackBrush).
