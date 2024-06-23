@@ -24,9 +24,12 @@ init([]) ->
     Black = {80, 160, 60},
     BlackBrush = wxBrush:new(Black),
     wxFrame:refresh(Frame),
-    {Frame, #{panel => Panel, white_brush => WhiteBrush, black_brush => BlackBrush}}.
+    {Frame, #{panel => Panel,
+        white_brush => WhiteBrush, black_brush => BlackBrush}}.
 
-paint_board(#{panel := Panel, white_brush := WhiteBrush, black_brush := BlackBrush}) ->
+paint_board(#{panel := Panel,
+        white_brush := WhiteBrush,
+        black_brush := BlackBrush}) ->
     {W, H} = wxPanel:getSize(Panel),
     SquareSize = square_size(W, H),
 
