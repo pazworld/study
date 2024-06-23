@@ -23,8 +23,9 @@ init([]) ->
     WhiteBrush = wxBrush:new(White),
     Black = {80, 160, 60},
     BlackBrush = wxBrush:new(Black),
+    ImageMap = load_images(),
     wxFrame:refresh(Frame),
-    {Frame, #{panel => Panel,
+    {Frame, #{panel => Panel, image_map => ImageMap,
         white_brush => WhiteBrush, black_brush => BlackBrush}}.
 
 % paint event
@@ -71,6 +72,23 @@ square_colour(Column, Row) ->
 
 rectangle({Column, Row}, SquareSize) ->
     {Column * SquareSize, Row * SquareSize, SquareSize, SquareSize}.
+
+load_images() ->
+    ImageFileNames = #{
+        {black, rook}   => "black_rook.png",
+        {black, knight} => "black_knight.png",
+        {black, bishop} => "black_bishop.png",
+        {black, queen}  => "black_queen.png",
+        {black, king}   => "black_king.png",
+        {white, rook}   => "white_rook.png",
+        {white, knight} => "white_knight.png",
+        {white, bishop} => "white_bishop.png",
+        {white, queen}  => "white_queen.png",
+        {white, king}   => "white_king.png"},
+    maps:map(fun(_K, V) -> wxImage:new(
+            filename:join("../images", V),
+            [{type, ?wxBITMAP_TYPE_PNG}]) end,
+        ImageFileNames).
 
 paint_board(#{panel := Panel,
         white_brush := WhiteBrush,
