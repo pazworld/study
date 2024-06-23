@@ -23,9 +23,10 @@ init([]) ->
     WhiteBrush = wxBrush:new(White),
     Black = {80, 160, 60},
     BlackBrush = wxBrush:new(Black),
+    Layout = init_board(),
     ImageMap = load_images(),
     wxFrame:refresh(Frame),
-    {Frame, #{panel => Panel, image_map => ImageMap,
+    {Frame, #{panel => Panel, image_map => ImageMap, layout => Layout,
         white_brush => WhiteBrush, black_brush => BlackBrush}}.
 
 % paint event
@@ -91,7 +92,20 @@ load_images() ->
             [{type, ?wxBITMAP_TYPE_PNG}]) end,
         ImageFileNames).
 
+init_board() ->
+    Columns = lists:seq(0, 7),
+    BlackPieces = [{black, rook}, {black, knight}, {black, bishop}, {black, queen},
+                   {black, king}, {black, bishop}, {black, knight}, {black, rook}],
+    WhitePieces = [{white, rook}, {white, knight}, {white, bishop}, {white, queen},
+                   {white, king}, {white, bishop}, {white, knight}, {white, rook}],
+    Row1 = [{{C, 1}, {white, pawn}} || C <- Columns ],
+    Row6 = [{{C, 1}, {black, pawn}} || C <- Columns ],
+    Row0 = [{{C, 0}, lists:nth(C + 1, WhitePieces)} || C <- Columns ],
+    Row7 = [{{C, 7}, lists:nth(C + 1, BlackPieces)} || C <- Columns ],
+    maps:from_list(Row0 ++ Row1 ++ Row6 ++ Row7).
+
 paint_board(#{panel := Panel,
+        layout := Layout,
         image_map := ImageMap,
         white_brush := WhiteBrush,
         black_brush := BlackBrush}) ->
