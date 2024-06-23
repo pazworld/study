@@ -27,30 +27,6 @@ init([]) ->
     {Frame, #{panel => Panel,
         white_brush => WhiteBrush, black_brush => BlackBrush}}.
 
-paint_board(#{panel := Panel,
-        white_brush := WhiteBrush,
-        black_brush := BlackBrush}) ->
-    {W, H} = wxPanel:getSize(Panel),
-    SquareSize = square_size(W, H),
-
-    PaintSquare =
-        fun(DC, C, R) ->
-            % io:format("~p~n", [square_colour(C, R)]),
-            Brush = case square_colour(C, R) of
-                black -> BlackBrush;
-                white -> WhiteBrush
-            end,
-            Rectangle = rectangle({C, R}, SquareSize),
-            wxDC:setBrush(DC, Brush),
-            wxDC:drawRectangle(DC, Rectangle)
-        end,
-
-    DC = wxPaintDC:new(Panel),
-    wxDC:setPen(DC, ?wxTRANSPARENT_PEN),
-    Seq0to7 = lists:seq(0, 7),
-    [PaintSquare(DC, C, R) || R <- Seq0to7, C <- Seq0to7],
-    wxPaintDC:destroy(DC).
-
 % paint event
 handle_sync_event(#wx{event=#wxPaint{}}, _, State) ->
     paint_board(State),
@@ -95,3 +71,27 @@ square_colour(Column, Row) ->
 
 rectangle({Column, Row}, SquareSize) ->
     {Column * SquareSize, Row * SquareSize, SquareSize, SquareSize}.
+
+paint_board(#{panel := Panel,
+        white_brush := WhiteBrush,
+        black_brush := BlackBrush}) ->
+    {W, H} = wxPanel:getSize(Panel),
+    SquareSize = square_size(W, H),
+
+    PaintSquare =
+        fun(DC, C, R) ->
+            % io:format("~p~n", [square_colour(C, R)]),
+            Brush = case square_colour(C, R) of
+                black -> BlackBrush;
+                white -> WhiteBrush
+            end,
+            Rectangle = rectangle({C, R}, SquareSize),
+            wxDC:setBrush(DC, Brush),
+            wxDC:drawRectangle(DC, Rectangle)
+        end,
+
+    DC = wxPaintDC:new(Panel),
+    wxDC:setPen(DC, ?wxTRANSPARENT_PEN),
+    Seq0to7 = lists:seq(0, 7),
+    [PaintSquare(DC, C, R) || R <- Seq0to7, C <- Seq0to7],
+    wxPaintDC:destroy(DC).
