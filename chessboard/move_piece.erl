@@ -21,15 +21,16 @@ init([]) ->
     wxFrame:connect(Frame, close_window),
     wxFrame:show(Frame),
     White = {140, 220, 120},
-    WhiteBrush = wxBrush:new(White),
     Black = {80, 160, 60},
-    BlackBrush = wxBrush:new(Black),
-    Layout = init_board(),
-    ImageMap = load_images(),
+    State = #{panel => Panel,
+        image_map => load_images(),
+        layout => init_board(),
+        white_brush => wxBrush:new(White),
+        black_brush => wxBrush:new(Black),
+        selected_brush => wxBrush:new({238, 232, 170}),
+        selected => none},
     wxFrame:refresh(Frame),
-    {Frame, #{panel => Panel, image_map => ImageMap, layout => Layout,
-        white_brush => WhiteBrush, black_brush => BlackBrush,
-        selected_brush => wxBrush:new({238, 232, 170}), selected => none}}.
+    {Frame, State}.
 
 % paint event
 handle_sync_event(#wx{event = #wxPaint{}}, _, State) ->
