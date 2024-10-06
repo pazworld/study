@@ -1,5 +1,7 @@
 -module(chess_board).
 
+-define(UTILS, chess_utils).
+
 -behaviour(wx_object).
 
 -export([start_link/0]).
@@ -25,8 +27,8 @@ init([]) ->
     White = {140, 220, 120},
     Black = {80, 160, 60},
     State = #{panel => Panel,
-        image_map => chess_utils:load_images(),
-        layout => chess_utils:init_board(),
+        image_map => ?UTILS:load_images(),
+        layout => ?UTILS:init_board(),
         white_brush => wxBrush:new(White),
         black_brush => wxBrush:new(Black),
         selected_brush => wxBrush:new({238, 232, 170}),
