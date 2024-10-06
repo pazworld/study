@@ -1,6 +1,10 @@
 -module(chess_board).
 
+-define(SQUARE, chess_square).
 -define(UTILS, chess_utils).
+-define(WHITE, {140, 220, 120}).
+-define(BLACK, {80, 160, 60}).
+-define(SELECTED_COLOUR, {238, 232, 170}).
 
 -behaviour(wx_object).
 
@@ -19,13 +23,48 @@ init([]) ->
 			[{style, ?wxDEFAULT_FRAME_STYLE bor ?wxFULL_REPAINT_ON_RESIZE}]),
     Panel = wxPanel:new(Frame, [{size, {200, 200}}]),
     wxPanel:setBackgroundStyle(Panel, ?wxBG_STYLE_CUSTOM),
-    wxPanel:connect(Panel, paint, [callback]),
-    wxPanel:connect(Panel, erase_background, [callback]),
-    wxPanel:connect(Panel, left_down),
+    % wxPanel:connect(Panel, paint, [callback]),
+    % wxPanel:connect(Panel, erase_background, [callback]),
+    % wxPanel:connect(Panel, left_down),
     wxFrame:connect(Frame, close_window),
-    wxFrame:show(Frame),
     White = {140, 220, 120},
     Black = {80, 160, 60},
+
+    Board = wxPanel:new(Frame, [{style, ?wxFULL_REPAINT_ON_RESIZE}]),
+    wxPanel:setBackgroundStyle(Board, ?wxBG_STYLE_CUSTOM),
+
+    Grid = wxGridSizer:new(8, 8, 0, 0),
+    wxPanel:setSizer(Board, Grid),
+
+    WhiteBrush = wxBrush:new(?WHITE),
+    BlackBrush = wxBrush:new(?BLACK),
+    SelectedBrush = wxBrush:new(?SELECTED_COLOUR),
+
+    MkSquare =
+        fun(C, R) ->
+            SquareColour = ?UTILS:square_colour(C, R),
+            Brush = case SquareColour of
+                white -> WhiteBrush;
+                black -> BlackBrush
+            end,
+            Square = ?SQUARE:start_link(
+                {C, R},
+                self(),
+                Board,
+                Brush,
+                SelectedBrush),
+            {{C, R}, Square}
+        end,
+
+    SquareList = [MkSquare(C, R) || R <- lists:seq(0, 7), C <- lists:seq(0, 7)],
+    [wxSizer:add(Grid, Square, [{flag, ?wxEXPAND}])
+        || {_, Square} <- SquareList],
+
+    MainSizer = wxBoxSizer:new(?wxVERTICAL),
+    wxSizer:add(MainSizer, Board, [{flag, ?wxEXPAND}, {proportion, 1}]),
+    wxFrame:setSizer(Frame, MainSizer),
+    wxFrame:show(Frame),
+
     State = #{panel => Panel,
         image_map => ?UTILS:load_images(),
         layout => ?UTILS:init_board(),
