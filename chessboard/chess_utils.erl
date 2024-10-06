@@ -1,6 +1,8 @@
 -module(chess_utils).
 
--export([init_board/0]).
+-export([init_board/0, load_images/0]).
+
+-include_lib("wx/include/wx.hrl").
 
 init_board() ->
     Columns = lists:seq(0, 7),
@@ -13,3 +15,22 @@ init_board() ->
     Row0 = [{{C, 0}, lists:nth(C + 1, BlackPieces)} || C <- Columns ],
     Row7 = [{{C, 7}, lists:nth(C + 1, WhitePieces)} || C <- Columns ],
     maps:from_list(Row0 ++ Row1 ++ Row6 ++ Row7).
+
+load_images() ->
+    ImageFileNames = #{
+        {black, rook}   => "black_rook.png",
+        {black, knight} => "black_knight.png",
+        {black, bishop} => "black_bishop.png",
+        {black, queen}  => "black_queen.png",
+        {black, king}   => "black_king.png",
+        {black, pawn}   => "black_pawn.png",
+        {white, rook}   => "white_rook.png",
+        {white, knight} => "white_knight.png",
+        {white, bishop} => "white_bishop.png",
+        {white, queen}  => "white_queen.png",
+        {white, king}   => "white_king.png",
+        {white, pawn}   => "white_pawn.png"},
+    maps:map(fun(_K, V) -> wxImage:new(
+            filename:join("../images", V),
+            [{type, ?wxBITMAP_TYPE_PNG}]) end,
+        ImageFileNames).

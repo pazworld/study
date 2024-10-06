@@ -25,7 +25,7 @@ init([]) ->
     White = {140, 220, 120},
     Black = {80, 160, 60},
     State = #{panel => Panel,
-        image_map => load_images(),
+        image_map => chess_utils:load_images(),
         layout => chess_utils:init_board(),
         white_brush => wxBrush:new(White),
         black_brush => wxBrush:new(Black),
@@ -113,25 +113,6 @@ where(X, Y, Panel) ->
     {W, H} = wxPanel:getSize(Panel),
     SquareSize = square_size(W, H),
     {X div SquareSize, Y div SquareSize}.
-
-load_images() ->
-    ImageFileNames = #{
-        {black, rook}   => "black_rook.png",
-        {black, knight} => "black_knight.png",
-        {black, bishop} => "black_bishop.png",
-        {black, queen}  => "black_queen.png",
-        {black, king}   => "black_king.png",
-        {black, pawn}   => "black_pawn.png",
-        {white, rook}   => "white_rook.png",
-        {white, knight} => "white_knight.png",
-        {white, bishop} => "white_bishop.png",
-        {white, queen}  => "white_queen.png",
-        {white, king}   => "white_king.png",
-        {white, pawn}   => "white_pawn.png"},
-    maps:map(fun(_K, V) -> wxImage:new(
-            filename:join("../images", V),
-            [{type, ?wxBITMAP_TYPE_PNG}]) end,
-        ImageFileNames).
 
 paint_board(#{panel := Panel,
         layout := Layout,
