@@ -71,6 +71,14 @@ handle_cast(Msg, State) ->
     io:format("handle_cast: Msg: ~p~n", [Msg]),
     {noreply, State}.
 
+handle_info({Property, Value}, State = #{square_panel := Panel})
+        when Property =:= selectable; Property =:= landable ->
+    case Value of
+        true -> wxWindow:setCursor(Panel, wxCursor:new(?wxCURSOR_HAND));
+        false -> wxWindow:setCursor(Panel, ?wxNullCursor)
+    end,
+    {noreply, maps:put(Property, Value, State)};
+
 handle_info({Property, Value}, State = #{square_panel := Panel}) ->
     wxWindow:refresh(Panel),
     {noreply, maps:put(Property, Value, State)};

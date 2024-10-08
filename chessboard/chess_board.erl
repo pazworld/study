@@ -78,6 +78,7 @@ init([]) ->
         black_brush => wxBrush:new(Black),
         selected_brush => wxBrush:new({238, 232, 170}),
         background_brush => wxBrush:new(wxPanel:getBackgroundColour(Panel)),
+        square_pid_map => SquarePidMap,
         selected => none},
     wxFrame:refresh(Frame),
     {Frame, State}.
@@ -132,6 +133,29 @@ handle_call(Request, From, State) ->
 handle_cast(Msg, State) ->
     io:format("handle_cast: Msg: ~p~n", [Msg]),
     {noreply, State}.
+
+handle_info({play, Colour}, State = #{layout := Layout,
+                                      square_pid_map := SquarePidMap}) ->
+    % maps:fold(
+    %     fun
+    %         (Location, {C, _}, _AccIn) when C =:= Colour ->
+    %             maps:get(Location, SquarePidMap) ! {selectable, true};
+    %         (Location, _, _) ->
+    %             maps:get(Location, SquarePidMap) ! {selectable, false}
+    %     end,
+    %     [], Layout),
+    % io:format("SquarePidMap: ~w~n", [SquarePidMap]),
+
+    maps:foreach(
+        fun(Location, {C, _}) ->
+            Pid = maps:get(Location, SquarePidMap),
+            Selectable = case C of Colour -> true; _ -> false end,
+            Pid ! {selectable, Selectable}
+            % io:format("~w: ~w, ", [Location, Selectable])
+        end,
+        Layout
+    ),
+    {noreply, State};
 
 handle_info(Info, State) ->
     io:format("handle_info: Info: ~p~n", [Info]),
