@@ -60,6 +60,12 @@ init([]) ->
     [wxSizer:add(Grid, Square, [{flag, ?wxEXPAND}])
         || {_, Square} <- SquareList],
 
+    Layout = ?UTILS:init_board(),
+    ImageMap = ?UTILS:load_images(),
+    SquareMap = maps:from_list(SquareList),
+    SquarePidMap = maps:map(fun(_, V) -> wx_object:get_pid(V) end, SquareMap),
+    layout_pieces(Layout, ImageMap, SquarePidMap),
+
     MainSizer = wxBoxSizer:new(?wxVERTICAL),
     wxSizer:add(MainSizer, Board, [{flag, ?wxEXPAND}, {proportion, 1}]),
     wxFrame:setSizer(Frame, MainSizer),
@@ -154,6 +160,16 @@ where(X, Y, Panel) ->
     {W, H} = wxPanel:getSize(Panel),
     SquareSize = square_size(W, H),
     {X div SquareSize, Y div SquareSize}.
+
+layout_pieces(Layout, ImageMap, SquarePidMap) ->
+    maps:fold(
+        fun(Location, Piece, _) ->
+            Image = maps:get(Piece, ImageMap),
+            Pid = maps:get(Location, SquarePidMap),
+            Pid ! {image, Image}
+        end,
+    [],
+    Layout).
 
 paint_board(#{panel := Panel,
         layout := Layout,

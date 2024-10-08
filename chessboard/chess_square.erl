@@ -71,6 +71,10 @@ handle_cast(Msg, State) ->
     io:format("handle_cast: Msg: ~p~n", [Msg]),
     {noreply, State}.
 
+handle_info({Property, Value}, State = #{square_panel := Panel}) ->
+    wxWindow:refresh(Panel),
+    {noreply, maps:put(Property, Value, State)};
+
 handle_info(Info, State) ->
     io:format("handle_info: Info: ~p~n", [Info]),
     {noreply, State}.

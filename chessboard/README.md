@@ -6,6 +6,6 @@ The files in this directory are created by extending the previous ones in turn.
 1. `move_piece.erl`: move piece on board
 1. `no_erase.erl`: stop erase event to avoid flickers
 1. `buffered_dc.erl`: draw with buffered dc
-1. `chess_board.erl`, `chess_utils.erl`: separate utility functions into new module
+1. `chess_board.erl`, `chess_square.erl`, `chess_utils.erl`: make each square wx_object
 
 The files in this directory use image files in `images` directory.
