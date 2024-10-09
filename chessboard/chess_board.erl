@@ -25,7 +25,6 @@ init([]) ->
     wxPanel:setBackgroundStyle(Panel, ?wxBG_STYLE_CUSTOM),
     % wxPanel:connect(Panel, paint, [callback]),
     % wxPanel:connect(Panel, erase_background, [callback]),
-    % wxPanel:connect(Panel, left_down),
     wxFrame:connect(Frame, close_window),
     White = {140, 220, 120},
     Black = {80, 160, 60},
@@ -92,30 +91,6 @@ handle_sync_event(#wx{event = #wxPaint{}}, _, State) ->
     paint_board(State),
     ok.
 
-% panel clicked
-handle_event(#wx{event = #wxMouse{leftDown = true, x = X, y = Y}},
-    State = #{panel := Panel,
-        layout := Layout,
-        selected := none}) ->  %% selecting a piece
-    {C, R} = where(X, Y, Panel),
-    case maps:get({C, R}, Layout, none) of
-        none ->
-            {noreply, State};
-        _ ->
-            wxPanel:refresh(Panel),
-            {noreply, State#{selected => {C, R}}}
-    end;
-
-handle_event(#wx{event = #wxMouse{leftDown = true, x = X, y = Y}},
-    State = #{panel := Panel,
-        layout := Layout,
-        selected := Selected}) ->  %% dropping a selected piece
-    {C, R} = where(X, Y, Panel),
-    Piece = maps:get(Selected, Layout),
-    NewLayout = maps:put({C, R}, Piece, maps:remove(Selected, Layout)),
-    wxPanel:refresh(Panel),
-    {noreply, State#{layout => NewLayout, selected => none}};
-
 % window closed
 handle_event(#wx{event=#wxClose{}}, State) ->
     {stop, normal, State};
@@ -134,6 +109,7 @@ handle_cast(Msg, State) ->
     io:format("handle_cast: Msg: ~p~n", [Msg]),
     {noreply, State}.
 
+% set turn of player colour (white/black)
 handle_info({play, Colour}, State = #{layout := Layout,
                                       square_pid_map := SquarePidMap}) ->
     % maps:fold(
@@ -157,6 +133,20 @@ handle_info({play, Colour}, State = #{layout := Layout,
     ),
     {noreply, State};
 
+% clicked event from square
+handle_info({we_selected, SquareLocation},
+        State = #{square_pid_map := SquarePidMap,
+                  layout := Layout}) ->
+    {Colour, _} = maps:get(SquareLocation, Layout),
+    maps:foreach(
+        fun(Location, {C, _}) ->
+            Pid = maps:get(Location, SquarePidMap),
+            Selectable = case C of Colour -> true; _ -> false end,
+            Pid ! {selectable, Selectable}
+        end,
+        Layout),
+    {noreply, State#{selected => SquareLocation}};
+
 handle_info(Info, State) ->
     io:format("handle_info: Info: ~p~n", [Info]),
     {noreply, State}.
@@ -179,11 +169,6 @@ square_colour(Column, Row) ->
 
 rectangle({Column, Row}, SquareSize) ->
     {Column * SquareSize, Row * SquareSize, SquareSize, SquareSize}.
-
-where(X, Y, Panel) ->
-    {W, H} = wxPanel:getSize(Panel),
-    SquareSize = square_size(W, H),
-    {X div SquareSize, Y div SquareSize}.
 
 layout_pieces(Layout, ImageMap, SquarePidMap) ->
     maps:fold(

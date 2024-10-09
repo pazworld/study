@@ -17,6 +17,7 @@ init([Location, BoardPid, Parent, Brush, SelectedBrush]) ->
     wxPanel:setBackgroundStyle(Panel, ?wxBG_STYLE_CUSTOM),
     wxPanel:connect(Panel, paint, [callback]),
     wxPanel:connect(Panel, erase_background, [callback]),
+    wxPanel:connect(Panel, left_down),
     State = #{
         location => Location,
         board_pid => BoardPid,
@@ -86,6 +87,21 @@ handle_info({Property, Value}, State = #{square_panel := Panel}) ->
 handle_info(Info, State) ->
     io:format("handle_info: Info: ~p~n", [Info]),
     {noreply, State}.
+
+% unselected square clicked
+handle_event(#wx{event = #wxMouse{type = left_down}},
+        State = #{square_panel := Panel,
+                board_pid := BoardPid,
+                selectable := true,
+                selected := false,
+                location := Location}) ->
+    BoardPid ! {we_selected, Location},
+    wxPanel:refresh(Panel),
+    {noreply, State#{selected => true}};
+
+% selected square clicked
+handle_event(#wx{event = #wxMouse{type = left_down}}, State) ->
+    {noreply, State};
 
 handle_event(Event, State) ->
     io:format("handle_event: Event: ~p~n", [Event]),
