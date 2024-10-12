@@ -68,7 +68,11 @@ init([]) ->
     MainSizer = wxBoxSizer:new(?wxVERTICAL),
     wxSizer:add(MainSizer, Board, [{flag, ?wxEXPAND}, {proportion, 1}]),
     wxFrame:setSizer(Frame, MainSizer),
+
     wxFrame:show(Frame),
+    {W, H} = wxFrame:getClientSize(Frame),
+    wxPanel:setSize(Board, W, H),
+    wxWindow:refresh(Frame),
 
     State = #{panel => Panel,
         image_map => ?UTILS:load_images(),
@@ -112,22 +116,11 @@ handle_cast(Msg, State) ->
 % set turn of player colour (white/black)
 handle_info({play, Colour}, State = #{layout := Layout,
                                       square_pid_map := SquarePidMap}) ->
-    % maps:fold(
-    %     fun
-    %         (Location, {C, _}, _AccIn) when C =:= Colour ->
-    %             maps:get(Location, SquarePidMap) ! {selectable, true};
-    %         (Location, _, _) ->
-    %             maps:get(Location, SquarePidMap) ! {selectable, false}
-    %     end,
-    %     [], Layout),
-    % io:format("SquarePidMap: ~w~n", [SquarePidMap]),
-
     maps:foreach(
-        fun(Location, {C, _}) ->
-            Pid = maps:get(Location, SquarePidMap),
-            Selectable = case C of Colour -> true; _ -> false end,
-            Pid ! {selectable, Selectable}
-            % io:format("~w: ~w, ", [Location, Selectable])
+        fun(Location, {C, _}) when C =:= Colour ->
+                maps:get(Location, SquarePidMap) ! {selectable, true};
+           (_, _) ->
+                ok
         end,
         Layout
     ),
@@ -137,15 +130,48 @@ handle_info({play, Colour}, State = #{layout := Layout,
 handle_info({we_selected, SquareLocation},
         State = #{square_pid_map := SquarePidMap,
                   layout := Layout}) ->
+    [SqPid ! {landable, true} || SqPid <- maps:values(SquarePidMap)],
     {Colour, _} = maps:get(SquareLocation, Layout),
     maps:foreach(
-        fun(Location, {C, _}) ->
+        fun(Location, {C, _}) when C =:= Colour ->
             Pid = maps:get(Location, SquarePidMap),
-            Selectable = case C of Colour -> true; _ -> false end,
-            Pid ! {selectable, Selectable}
+            Pid ! {selectable, false},
+            Pid ! {landable, false};
+           (_, _) ->
+            ok
         end,
         Layout),
     {noreply, State#{selected => SquareLocation}};
+
+handle_info({we_moved, MovedToLocation},
+        State = #{selected := FromLocation,
+                square_pid_map := SquarePidMap,
+                image_map := ImageMap,
+                layout := Layout}) ->
+
+    [SqPid ! {landable, false} || SqPid <- maps:values(SquarePidMap)],
+
+    Piece = {Colour, _} = maps:get(FromLocation, Layout),
+    Opponent = ?UTILS:opponent(Colour),
+
+    maps:foreach(
+        fun(Location, {C, _}) when C =:= Opponent ->
+                maps:get(Location, SquarePidMap) ! {selectable, true};
+           (_, _) ->
+                ok
+        end,
+        Layout),
+
+    FromPid = maps:get(FromLocation, SquarePidMap),
+    FromPid ! {selected, false},
+    FromPid ! {image, none},
+    PieceImage = maps:get(Piece, ImageMap),
+    TargetPid = maps:get(MovedToLocation, SquarePidMap),
+    TargetPid ! {image, PieceImage},
+
+    {noreply, State#{selected => none,
+                     layout => (maps:remove(FromLocation, Layout))#{
+                        MovedToLocation => Piece}}};
 
 handle_info(Info, State) ->
     io:format("handle_info: Info: ~p~n", [Info]),

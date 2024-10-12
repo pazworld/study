@@ -1,6 +1,6 @@
 -module(chess_utils).
 
--export([init_board/0, load_images/0, square_colour/2]).
+-export([init_board/0, load_images/0, opponent/1, square_colour/2]).
 
 -include_lib("wx/include/wx.hrl").
 
@@ -34,6 +34,9 @@ load_images() ->
             filename:join("../images", V),
             [{type, ?wxBITMAP_TYPE_PNG}]) end,
         ImageFileNames).
+
+opponent(white) -> black;
+opponent(black) -> white.
 
 square_colour(Col, Row) ->
     case ((Col + Row) rem 2) of

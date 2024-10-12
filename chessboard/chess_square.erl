@@ -91,13 +91,21 @@ handle_info(Info, State) ->
 % unselected square clicked
 handle_event(#wx{event = #wxMouse{type = left_down}},
         State = #{square_panel := Panel,
-                board_pid := BoardPid,
-                selectable := true,
-                selected := false,
-                location := Location}) ->
+                  board_pid := BoardPid,
+                  selectable := true,
+                  selected := false,
+                  location := Location}) ->
     BoardPid ! {we_selected, Location},
     wxPanel:refresh(Panel),
     {noreply, State#{selected => true}};
+
+% move target square clicked
+handle_event(#wx{event = #wxMouse{type = left_down}},
+        State = #{board_pid := BoardPid,
+                  landable := true,
+                  location := Location}) ->
+    BoardPid ! {we_moved, Location},
+    {noreply, State};
 
 % selected square clicked
 handle_event(#wx{event = #wxMouse{type = left_down}}, State) ->
@@ -107,8 +115,9 @@ handle_event(Event, State) ->
     io:format("handle_event: Event: ~p~n", [Event]),
     {noreply, State}.
 
-terminate(_Reason, _State) ->
-    wx:destroy().
+terminate(_Reason, #{square_panel := Panel}) ->
+    wxPanel:destroy(Panel),
+    ok.
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
