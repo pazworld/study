@@ -55,13 +55,30 @@ init([]) ->
             {{C, R}, Square}
         end,
 
-    SquareList = [MkSquare(C, R) || R <- lists:seq(0, 7), C <- lists:seq(0, 7)],
-    [wxSizer:add(Grid, Square, [{flag, ?wxEXPAND}])
-        || {_, Square} <- SquareList],
+    MkBoard =
+        fun(SquareMap, Seq) ->
+            wxSizer:clear(Grid),
+            [wx_object:stop(Sq) || Sq <- maps:values(SquareMap)],
+            SquareList = [MkSquare(C, R) || R <- Seq, C <- Seq],
+            [wxSizer:add(Grid, Square, [{flag, ?wxEXPAND}])
+                || {_, Square} <- SquareList],
+            SquareList
+        end,
+
+    MkWhiteBoard = fun(ChessBoard, SquareMap) ->
+            Squares = MkBoard(SquareMap, lists:seq(0, 7)),
+            wxPanel:layout(ChessBoard),
+            Squares
+        end,
+    MkBlackBoard = fun(ChessBoard, SquareMap) ->
+            Squares = MkBoard(SquareMap, lists:seq(7, 0, -1)),
+            wxPanel:layout(ChessBoard),
+            Squares
+        end,
 
     Layout = ?UTILS:init_board(),
     ImageMap = ?UTILS:load_images(),
-    SquareMap = maps:from_list(SquareList),
+    SquareMap = maps:from_list(MkWhiteBoard(Board, #{})),
     SquarePidMap = maps:map(fun(_, V) -> wx_object:get_pid(V) end, SquareMap),
     layout_pieces(Layout, ImageMap, SquarePidMap),
 
@@ -74,16 +91,19 @@ init([]) ->
     wxPanel:setSize(Board, W, H),
     wxWindow:refresh(Frame),
 
-    State = #{panel => Board,
+    State = #{board => Board,
         image_map => ?UTILS:load_images(),
         layout => ?UTILS:init_board(),
+        make_white_board => MkWhiteBoard,
+        make_black_board => MkBlackBoard,
         white_brush => wxBrush:new(White),
         black_brush => wxBrush:new(Black),
         selected_brush => wxBrush:new({238, 232, 170}),
         background_brush => wxBrush:new(wxPanel:getBackgroundColour(Board)),
+        square_map => SquareMap,
         square_pid_map => SquarePidMap,
         selected => none},
-    wxFrame:refresh(Frame),
+    % wxFrame:refresh(Frame),
     {Frame, State}.
 
 % ignore erase event
@@ -143,6 +163,7 @@ handle_info({we_selected, SquareLocation},
         Layout),
     {noreply, State#{selected => SquareLocation}};
 
+% move target selected from square
 handle_info({we_moved, MovedToLocation},
         State = #{selected := FromLocation,
                 square_pid_map := SquarePidMap,
@@ -172,6 +193,26 @@ handle_info({we_moved, MovedToLocation},
     {noreply, State#{selected => none,
                      layout => (maps:remove(FromLocation, Layout))#{
                         MovedToLocation => Piece}}};
+
+% change layout by role
+handle_info({role, Role},
+        State = #{board := Board,
+                  image_map := ImageMap,
+                  make_white_board := MkWhiteBoard,
+                  make_black_board := MkBlackBoard,
+                  square_map := PreviousSquareMap}) ->
+    SquareMap = maps:from_list(
+        case Role of
+            white -> MkWhiteBoard(Board, PreviousSquareMap);
+            black -> MkBlackBoard(Board, PreviousSquareMap)
+        end),
+    Layout = ?UTILS:init_board(),
+    SquarePidMap = maps:map(fun(_, V) -> wx_object:get_pid(V) end, SquareMap),
+    layout_pieces(Layout, ImageMap, SquarePidMap),
+
+    {noreply, State#{layout => Layout,
+                     square_map => SquareMap,
+                     square_pid_map => SquarePidMap}};
 
 handle_info(Info, State) ->
     io:format("handle_info: Info: ~p~n", [Info]),
